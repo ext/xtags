@@ -1,1 +1,10 @@
-*.pyc
+# python
+*.py[co]
+*.egg
+*.egg-info
+dist
+build
+
+# emacs
+*~
+\#*\#
