@@ -64,8 +64,6 @@ class Metadata:
         self._metadata[k] = v
 
     def __getitem__(self, k):
-        print 'getitem', k
-        raise ValueError
         return self._metadata.get(k, None)
 
     def __contains__(self, k):
@@ -79,7 +77,7 @@ class Metadata:
                 return to_str(['%s: %s' % y for y in x.items()])
             return str(x)
 
-        tags = u"\n".join([u"%-15s%s" % (k, to_str(v)) for k,v in self._metadata.items()])
-        return '''Tag metadata for {folder}:
+        tags = u"\n".join([u"%-15s%s" % (k, to_str(v)) for k,v in self._metadata.items() if k[:5] != 'xtags'])
+        return '''Tag metadata (v{version}) for {folder}:
 
-{tags}'''.format(folder=self._folder, tags=tags.encode('utf-8'))
+{tags}'''.format(folder=self._folder, version=self.version(), tags=tags.encode('utf-8'))
