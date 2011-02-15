@@ -5,13 +5,27 @@ import sys, traceback
 import json
 from os.path import isdir, realpath, join
 
+# metadata version
+version = 1
+
+class MetadataError(Exception):
+    def __init__(self, path, message):
+        self.path = path
+        self.message = message
+        self.exc = sys.exc_info()
+
+    def __str__(self):
+        return 'xtags: %s: %s' % (self.path, self.message)
+
 class Metadata:
     def __init__(self, folder, mode='r'):
         if not isdir(folder):
-            raise ValueError, 'must be directory'
+            raise MetadataError(folder, 'No such directory.')
 
         self._folder = realpath(folder)
-        self._metadata = {}
+        self._metadata = {
+            'xtags:version': version
+        }
         
         try:
             with open(join(folder, '.tag-metadata')) as fp:
@@ -19,19 +33,27 @@ class Metadata:
         except IOError: # no metadata
             # read-only, but no metadata available
             if mode == 'r':
-                raise
+                raise MetadataError(folder, 'No metadata.')
             # if it is write-enabled, it is ok because
             # it will be created.
         except ValueError: # corrupt metadata
-            print >> sys.stderr, "Warning, metadata is corrupt."
-            traceback.print_exc(file=sys.stderr)
+            raise ValueError, 'Corrupt metadata'
 
     def commit(self):
+        # always save using the latest version
+        self._metadata['xtags:version'] = version
+
         with open(join(self._folder, '.tag-metadata'), 'w') as fp:
             json.dump(self._metadata, fp, indent=4)
             fp.write("\n")
 
+    def version(self):
+        return self['xtags:version']
+
     def __setitem__(self, k, v):
+        if k[:5] == 'xtags:':
+            raise ValueError, 'xtags: is a reserved prefix'
+
         try:
             p = v.split(',')
             if len(p) > 1:
@@ -42,7 +64,12 @@ class Metadata:
         self._metadata[k] = v
 
     def __getitem__(self, k):
+        print 'getitem', k
+        raise ValueError
         return self._metadata.get(k, None)
+
+    def __contains__(self, k):
+        return k in self._metadata
 
     def __str__(self):
         def to_str(x):
