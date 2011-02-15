@@ -6,7 +6,7 @@ import json
 from os.path import isdir, realpath, join
 
 class Metadata:
-    def __init__(self, folder):
+    def __init__(self, folder, mode='r'):
         if not isdir(folder):
             raise ValueError, 'must be directory'
 
@@ -17,7 +17,11 @@ class Metadata:
             with open(join(folder, '.tag-metadata')) as fp:
                 self._metadata = json.load(fp)
         except IOError: # no metadata
-            pass
+            # read-only, but no metadata available
+            if mode == 'r':
+                raise
+            # if it is write-enabled, it is ok because
+            # it will be created.
         except ValueError: # corrupt metadata
             print >> sys.stderr, "Warning, metadata is corrupt."
             traceback.print_exc(file=sys.stderr)
